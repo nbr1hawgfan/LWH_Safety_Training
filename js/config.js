@@ -4,7 +4,7 @@
 // ============================================================
 window.LWH_CONFIG = {
   // Apps Script web app /exec URL (Deploy > Manage deployments > Web app URL)
-  API_URL: 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE',
+  API_URL: 'https://script.google.com/macros/s/AKfycbxY_tZyajeHo00TH_EWaFgHBhG-fOWN8uxeXwxufDBzVnA8cOZxCdDtkdJ7N_O0uKfK/exec',
 
   APP_VERSION: '1.0.0',
   COMPANY: 'Logistics Warehouse',
