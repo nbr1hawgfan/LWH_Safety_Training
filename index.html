@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C41230">
+<meta name="description" content="Logistics Warehouse monthly safety training, special trainings and incident reporting.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Safety Training">
+<title>LWH Safety Training</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div id="offlineBar" class="offline-bar hidden">You are offline. Training and reports need a connection.</div>
+
+<!-- ═══ UTILITY STRIP: date / time / weather ═══ -->
+<div class="util">
+  <div class="util-left">
+    <span class="util-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span id="utilDate">--</span>
+    </span>
+  </div>
+  <div class="util-right">
+    <span class="util-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span class="util-clock" id="utilClock">--:--</span>
+    </span>
+    <span class="util-item util-wx" id="wxNow" title="Current conditions">
+      <span id="wxIcon"></span>
+      <span class="util-temp" id="wxTemp">--°</span>
+      <span id="wxCond" class="util-hide-sm"></span>
+    </span>
+    <span class="util-item" id="wxToday" title="Today's forecast">
+      <span>Today</span>
+      <strong id="wxHiLo">H --° / L --°</strong>
+    </span>
+    <span class="util-item util-hide-sm" id="wxRainWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg>
+      <span id="wxRain">--%</span>
+    </span>
+  </div>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<header class="hdr">
+  <div class="brand">
+    <div class="brand-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#C41230" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="#151515"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Logistics Warehouse</div>
+      <div class="brand-sub">Safety Training</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-user hidden" id="hdrUser">
+      <div class="hdr-user-name" id="hdrUserName"></div>
+      <div class="hdr-user-role" id="hdrUserRole">Signed In</div>
+    </div>
+    <button class="btn btn-black btn-sm hidden" id="hdrSignOut" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><path d="M9 21H4V3h5M16 17l5-5-5-5M21 12H9"/></svg>
+      Sign Out
+    </button>
+  </div>
+</header>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="nav">
+  <button class="nav-btn active" data-tab="emp">My Training</button>
+  <button class="nav-btn" data-tab="mgr">Manager Dashboard</button>
+  <button class="nav-btn" data-tab="special">Special Trainings</button>
+  <button class="nav-btn" data-tab="inc">Incidents</button>
+</nav>
+
+<main>
+
+<!-- ════════════════ EMPLOYEE ════════════════ -->
+<section id="page-emp" class="page active">
+
+  <!-- Login -->
+  <div id="emp-login">
+    <div class="page-head"><div>
+      <h1 class="page-title">Monthly Safety Training</h1>
+      <p class="page-sub">Sign in with your name and 4-digit PIN. &nbsp;/&nbsp; Inicie sesión con su nombre y PIN.</p>
+    </div></div>
+    <div class="login-wrap">
+      <div class="card">
+        <div class="card-hd"><div><h2>Employee Sign In</h2></div></div>
+        <div class="card-bd">
+          <div id="empLoginErr" class="alert alert-error hidden"></div>
+          <div id="empListLoading" class="spin-wrap"><div class="spin"></div>Loading employee list...</div>
+          <form id="empLoginForm" class="hidden" autocomplete="off">
+            <div class="fgrp">
+              <label class="flbl" for="empSel">Your Name / Su Nombre</label>
+              <select id="empSel" class="finp"><option value="">-- Select your name --</option></select>
+            </div>
+            <div class="fgrp">
+              <label class="flbl center" for="empPin">4-Digit PIN</label>
+              <input type="password" id="empPin" class="finp pin" maxlength="4" placeholder="----" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+            </div>
+            <button class="btn btn-red btn-block mt" type="submit" id="empLoginBtn">Sign In</button>
+          </form>
+        </div>
+      </div>
+      <p class="login-note">Don't see your name or forgot your PIN? Contact your manager or HR.</p>
+    </div>
+  </div>
+
+  <!-- Training list -->
+  <div id="emp-home" class="hidden">
+    <div class="page-head"><div>
+      <h1 class="page-title" id="empWelcome">Welcome</h1>
+      <p class="page-sub" id="empWelcomeSub"></p>
+    </div></div>
+
+    <div class="lang-bar">
+      <div class="lang-lbl">Language / Idioma / Langue / Язык / اللغة</div>
+      <div class="lang-btns" id="langBtns">
+        <button class="lang-btn" data-lang="EN">English</button>
+        <button class="lang-btn" data-lang="ES">Español</button>
+        <button class="lang-btn" data-lang="FR">Français</button>
+        <button class="lang-btn" data-lang="RU">Русский</button>
+        <button class="lang-btn" data-lang="AR">العربية</button>
+      </div>
+    </div>
+
+    <div id="empHomeSpin" class="spin-wrap"><div class="spin"></div></div>
+    <div id="empHomeBody" class="hidden">
+      <div class="section-label" id="lblMonthly">Monthly Trainings</div>
+      <div id="monthList"></div>
+      <div id="specialWrap" class="hidden">
+        <div class="section-label" id="lblSpecial">Special / Required Trainings</div>
+        <div id="specialList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training view -->
+  <div id="emp-training" class="hidden">
+    <div class="row-between" style="margin-bottom:16px;">
+      <button class="btn btn-line btn-sm" id="backBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M15 18l-6-6 6-6"/></svg>
+        <span id="backLbl">Back</span>
+      </button>
+      <div class="muted" id="trainWho" style="font-size:15px;"></div>
+    </div>
+
+    <div id="doneBanner" class="alert alert-success hidden"></div>
+
+    <div class="topic-banner">
+      <div class="topic-lbl" id="topicLbl"></div>
+      <div class="topic-name" id="topicName"></div>
+      <div class="topic-desc" id="topicDesc"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><div><h2 id="lblVideo">Training Video</h2><p id="vidInstr"></p></div></div>
+      <div class="video-wrap"><iframe id="vidFrame" title="Training video" src="about:blank" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+      <div class="timer-row">
+        <span class="timer-lbl" id="lblTimeLeft">Time remaining</span>
+        <div class="prog"><div class="prog-fill" id="progFill"></div></div>
+        <span class="timer-val" id="timerVal">--:--</span>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard">
+      <div class="card-hd"><div><h2 id="lblQuiz">Knowledge Check</h2><p id="lblQuizSub"></p></div></div>
+      <div class="card-bd" id="quizRoot">
+        <div id="quizLocked" class="quiz-locked">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><rect x="4" y="11" width="16" height="11"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <span id="lblQuizLocked"></span>
+        </div>
+        <div id="quizBody" class="hidden">
+          <div id="quizQs"></div>
+          <div id="quizSubmitArea">
+            <label class="ack"><input type="checkbox" id="ackCheck"><span id="ackText"></span></label>
+            <div id="quizErr" class="alert alert-error hidden"></div>
+            <button class="btn btn-red btn-block" id="submitBtn" type="button">Submit Answers</button>
+          </div>
+          <div id="resultPanel" class="result hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ MANAGER LOGIN (shared) ════════════════ -->
+<section id="page-login" class="page">
+  <div class="page-head"><div>
+    <h1 class="page-title">Manager / HR Access</h1>
+    <p class="page-sub">One sign-in unlocks the dashboard, special trainings and incident reporting.</p>
+  </div></div>
+  <div class="login-wrap">
+    <div class="card">
+      <div class="card-hd"><div><h2>Secure Session</h2></div></div>
+      <div class="card-bd">
+        <div id="mgrLoginErr" class="alert alert-error hidden"></div>
+        <form id="mgrLoginForm" autocomplete="off">
+          <div class="fgrp">
+            <label class="flbl center" for="mgrPin">Manager or HR PIN</label>
+            <input type="password" id="mgrPin" class="finp pin" maxlength="8" placeholder="----" inputmode="numeric" autocomplete="off">
+          </div>
+          <button class="btn btn-red btn-block mt" type="submit" id="mgrLoginBtn">Sign In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ MANAGER DASHBOARD ════════════════ -->
+<section id="page-mgr" class="page">
+  <div class="page-head"><div>
+    <h1 class="page-title" id="dashTitle">Training Dashboard</h1>
+    <p class="page-sub" id="dashSub"></p>
+  </div></div>
+
+  <div class="ctrl-row">
+    <div class="fgrp"><label class="flbl" for="dashMonth">Month</label>
+      <select id="dashMonth" class="finp"></select></div>
+    <div class="fgrp"><label class="flbl" for="dashYear">Year</label>
+      <select id="dashYear" class="finp"></select></div>
+    <button class="btn btn-black" id="dashRefresh" type="button">Refresh</button>
+  </div>
+
+  <div id="dashSpin" class="spin-wrap hidden"><div class="spin"></div>Loading...</div>
+  <div id="dashBody" class="hidden">
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="stTotal">--</div><div class="stat-lbl">Employees</div></div>
+      <div class="stat green"><div class="stat-num" id="stComplete">--</div><div class="stat-lbl">Complete</div></div>
+      <div class="stat amber"><div class="stat-num" id="stOnTime">--</div><div class="stat-lbl">On Time</div></div>
+      <div class="stat red"><div class="stat-num" id="stIncomplete">--</div><div class="stat-lbl">Incomplete</div></div>
+    </div>
+    <div id="dashAlert" class="alert hidden"></div>
+
+    <div class="toolbar">
+      <button class="btn btn-ghost btn-sm" id="btnCsv" type="button">Export CSV</button>
+      <button class="btn btn-ghost btn-sm" id="btnPrint" type="button">Print</button>
+      <button class="btn btn-ghost btn-sm" id="btnTranscript" type="button">Annual Transcript</button>
+    </div>
+
+    <div class="card hidden" id="transcriptCard">
+      <div class="card-hd"><div><h2>Annual Training Transcript</h2><p>PDF is emailed to HR and managers and saved to Drive.</p></div></div>
+      <div class="card-bd">
+        <div id="transcriptMsg" class="alert hidden"></div>
+        <div class="fgrp"><label class="flbl" for="transcriptEmp">Employee</label>
+          <select id="transcriptEmp" class="finp"><option value="">-- Select employee --</option></select></div>
+        <p class="hint" style="margin-bottom:12px;">For the year-end batch of all employees, run <strong>generateAllTranscripts()</strong> from the Apps Script editor (it runs too long for the app).</p>
+        <button class="btn btn-red" id="transcriptBtn" type="button">Generate PDF and Email</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="fSearch" class="finp" placeholder="Search name or ID...">
+      <select id="fWarehouse" class="finp"><option value="">All Warehouses</option></select>
+      <select id="fStatus" class="finp">
+        <option value="">All Statuses</option>
+        <option value="Complete">Complete</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Not Started">Not Started</option>
+        <option value="Locked">Locked Out</option>
+      </select>
+    </div>
+
+    <div id="mgrCards"></div>
+    <div class="card hidden" id="mgrTblCard">
+      <div class="tbl-wrap"><table class="dtbl">
+        <thead><tr><th>Name</th><th>ID</th><th>Warehouse</th><th>Status</th><th>Completed</th><th>On Time</th><th>Attempts</th><th class="no-print"></th></tr></thead>
+        <tbody id="mgrTbody"></tbody>
+      </table></div>
+    </div>
+    <div id="mgrEmpty" class="alert alert-info hidden">No employees match your filters.</div>
+  </div>
+</section>
+
+<!-- ════════════════ SPECIAL TRAININGS ════════════════ -->
+<section id="page-special" class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Special Trainings</h1>
+      <p class="page-sub">Ad-hoc and incident-driven required trainings.</p>
+    </div>
+    <button class="btn btn-red" id="btnNewSpecial" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M12 5v14M5 12h14"/></svg>
+      New Special Training
+    </button>
+  </div>
+
+  <div class="card hidden" id="createCard">
+    <div class="card-hd dark"><div><h2>New Special Training</h2><p>Write questions in English. Other languages translate automatically.</p></div></div>
+    <div class="card-bd">
+      <div id="createMsg" class="alert hidden"></div>
+      <div class="form-sec">Training Details</div>
+      <div class="fgrp"><label class="flbl" for="cf_title">Training Title</label><input type="text" id="cf_title" class="finp" placeholder="e.g. Active Shooter Response"></div>
+      <div class="fgrp"><label class="flbl" for="cf_desc">Description</label><input type="text" id="cf_desc" class="finp" placeholder="Brief description of this training"></div>
+      <div class="grid2">
+        <div class="fgrp"><label class="flbl" for="cf_video">YouTube Link or Video ID</label><input type="text" id="cf_video" class="finp" placeholder="https://youtu.be/... or dqnsFo9jCmw"></div>
+        <div class="fgrp"><label class="flbl" for="cf_duration">Video Length (minutes)</label><input type="number" id="cf_duration" class="finp" value="5" min="1" step="0.5"></div>
+      </div>
+      <div class="grid2">
+        <div class="fgrp"><label class="flbl" for="cf_assignType">Assign To</label>
+          <select id="cf_assignType" class="finp">
+            <option value="ALL">All Employees</option>
+            <option value="WAREHOUSE">By Warehouse</option>
+            <option value="EMPLOYEES">Specific Employees</option>
+          </select></div>
+        <div class="fgrp"><label class="flbl" for="cf_assignTo" id="cf_assignToLbl">Value</label><input type="text" id="cf_assignTo" class="finp" value="ALL" readonly></div>
+      </div>
+      <div class="grid2">
+        <div class="fgrp"><label class="flbl" for="cf_deadline">Deadline (optional)</label><input type="date" id="cf_deadline" class="finp"></div>
+        <div class="fgrp"><label class="flbl" for="cf_by">Created By</label><input type="text" id="cf_by" class="finp" placeholder="Your name"></div>
+      </div>
+      <div class="form-sec">Questions — enter the correct answer first</div>
+      <div id="qFields"></div>
+      <div class="toolbar mt">
+        <button class="btn btn-red" id="createBtn" type="button">Create Training</button>
+        <button class="btn btn-line" id="createCancel" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="specSpin" class="spin-wrap hidden"><div class="spin"></div>Loading...</div>
+  <div id="specBody"></div>
+</section>
+
+<!-- ════════════════ INCIDENTS ════════════════ -->
+<section id="page-inc" class="page">
+  <div class="page-head"><div>
+    <h1 class="page-title">Incident Reports</h1>
+    <p class="page-sub">First Report of Injury (AWCC Form IA-1) · Incident Log · OSHA 300</p>
+  </div></div>
+
+  <div class="subtabs">
+    <button class="subtab active" data-inc="new">New Report</button>
+    <button class="subtab" data-inc="log">Incident Log</button>
+    <button class="subtab" data-inc="osha">OSHA 300</button>
+  </div>
+
+  <!-- New report -->
+  <div id="inc-new">
+    <div class="card">
+      <div class="card-hd dark"><div><h2>First Report of Injury / Illness</h2><p>AWCC Form IA-1 — Arkansas Workers' Compensation</p></div></div>
+      <div class="card-bd">
+        <div id="incMsg" class="alert hidden"></div>
+
+        <div class="form-sec">Employee Information</div>
+        <div class="fgrp"><label class="flbl" for="inc_pick">Pick Employee (fills name, ID, warehouse)</label>
+          <select id="inc_pick" class="finp"><option value="">-- Optional: select from employee list --</option></select></div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_empName">Employee Name (Last, First Middle)</label><input type="text" id="inc_empName" class="finp" placeholder="Smith, John A"></div>
+          <div class="fgrp"><label class="flbl" for="inc_empId">Employee ID</label><input type="text" id="inc_empId" class="finp"></div>
+        </div>
+        <div class="grid3">
+          <div class="fgrp"><label class="flbl" for="inc_jobTitle">Job Title</label><input type="text" id="inc_jobTitle" class="finp" placeholder="Warehouse Associate"></div>
+          <div class="fgrp"><label class="flbl" for="inc_warehouse">Department / Warehouse</label>
+            <select id="inc_warehouse" class="finp">
+              <option value="">Select...</option>
+              <option>WHSE10</option><option>WHSE20</option><option>WHSE30</option><option>WHSE40</option>
+              <option>WHSE60</option><option>WHSE85</option><option>Office</option><option>Shop</option>
+            </select></div>
+          <div class="fgrp"><label class="flbl" for="inc_empStatus">Employment Status</label>
+            <select id="inc_empStatus" class="finp"><option>Full-Time</option><option>Part-Time</option><option>Seasonal</option></select></div>
+        </div>
+        <div class="grid4">
+          <div class="fgrp"><label class="flbl" for="inc_dob">Date of Birth</label><input type="date" id="inc_dob" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_dateHired">Date Hired</label><input type="date" id="inc_dateHired" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_sex">Sex</label>
+            <select id="inc_sex" class="finp"><option value="">Unknown</option><option>Male</option><option>Female</option></select></div>
+          <div class="fgrp"><label class="flbl" for="inc_marital">Marital Status</label>
+            <select id="inc_marital" class="finp"><option value="">Unknown</option><option>Married</option><option value="Single">Single</option><option>Separated</option></select></div>
+        </div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_empAddress">Employee Address</label><input type="text" id="inc_empAddress" class="finp" placeholder="123 Main St, Fort Smith AR 72901"></div>
+          <div class="fgrp"><label class="flbl" for="inc_empPhone">Employee Phone</label><input type="tel" id="inc_empPhone" class="finp" placeholder="(479) 555-0100"></div>
+        </div>
+
+        <div class="form-sec">Incident Details</div>
+        <div class="grid4">
+          <div class="fgrp"><label class="flbl" for="inc_dateInjury">Date of Injury *</label><input type="date" id="inc_dateInjury" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_timeInjury">Time of Injury</label><input type="time" id="inc_timeInjury" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_timeWorkBegan">Time Work Began</label><input type="time" id="inc_timeWorkBegan" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_onPremises">On Employer Premises?</label>
+            <select id="inc_onPremises" class="finp"><option>Yes</option><option>No</option></select></div>
+        </div>
+        <div class="fgrp"><label class="flbl" for="inc_deptLocation">Department / Location Where It Occurred</label><input type="text" id="inc_deptLocation" class="finp" placeholder="e.g. WHSE10 Receiving Dock, Bay 3"></div>
+        <div class="fgrp"><label class="flbl" for="inc_equipment">Equipment, Materials or Chemicals Being Used</label><input type="text" id="inc_equipment" class="finp" placeholder="e.g. Pallet jack, box cutter. NA if none."></div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_activity">Specific Activity</label><input type="text" id="inc_activity" class="finp" placeholder="e.g. Unloading pallets from trailer"></div>
+          <div class="fgrp"><label class="flbl" for="inc_workProcess">Work Process</label><input type="text" id="inc_workProcess" class="finp" placeholder="e.g. Receiving. NA if not applicable."></div>
+        </div>
+        <div class="fgrp"><label class="flbl" for="inc_sequence">How Did the Injury Occur? *</label><textarea id="inc_sequence" class="finp" placeholder="Sequence of events, including any objects or substances involved..."></textarea></div>
+
+        <div class="form-sec">Injury / Illness</div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_typeInjury">Type of Injury / Illness</label><input type="text" id="inc_typeInjury" class="finp" placeholder="Laceration, Sprain, Fracture, Burn"></div>
+          <div class="fgrp"><label class="flbl" for="inc_partBody">Part of Body Affected</label><input type="text" id="inc_partBody" class="finp" placeholder="Right hand, Lower back, Left knee"></div>
+        </div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_treatment">Initial Treatment</label>
+            <select id="inc_treatment" class="finp">
+              <option value="No Medical Treatment">No Medical Treatment</option>
+              <option value="Minor by Employer">Minor — Treated by Employer</option>
+              <option value="Minor Clinic / Hospital">Minor Clinic / Hospital</option>
+              <option value="Emergency Care">Emergency Care</option>
+              <option value="Hospitalized > 24 Hours">Hospitalized More Than 24 Hours</option>
+              <option value="Future Major Medical / Lost Time Anticipated">Future Major Medical / Lost Time Anticipated</option>
+            </select></div>
+          <div class="fgrp"><label class="flbl" for="inc_cause">Cause of Injury</label><input type="text" id="inc_cause" class="finp" placeholder="Slipped on wet floor, Caught in machinery"></div>
+        </div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_physician">Physician / Provider</label><input type="text" id="inc_physician" class="finp" placeholder="Name and address"></div>
+          <div class="fgrp"><label class="flbl" for="inc_hospital">Hospital (if any)</label><input type="text" id="inc_hospital" class="finp" placeholder="Name and address"></div>
+        </div>
+        <div class="grid3">
+          <div class="fgrp"><label class="flbl" for="inc_safeguardsProvided">Safeguards Provided?</label><select id="inc_safeguardsProvided" class="finp"><option>Yes</option><option>No</option></select></div>
+          <div class="fgrp"><label class="flbl" for="inc_safeguardsUsed">Safeguards Used?</label><select id="inc_safeguardsUsed" class="finp"><option>Yes</option><option>No</option></select></div>
+          <div class="fgrp"><label class="flbl" for="inc_fullPay">Full Pay Day of Injury?</label><select id="inc_fullPay" class="finp"><option>Yes</option><option>No</option></select></div>
+        </div>
+
+        <div class="form-sec">Time Loss</div>
+        <div class="grid4">
+          <div class="fgrp"><label class="flbl" for="inc_lastWorkDate">Last Work Date</label><input type="date" id="inc_lastWorkDate" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_disabilityDate">Disability Began</label><input type="date" id="inc_disabilityDate" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_returnDate">Returned to Work</label><input type="date" id="inc_returnDate" class="finp"></div>
+          <div class="fgrp"><label class="flbl" for="inc_daysAway">Days Away</label><input type="number" id="inc_daysAway" class="finp" value="0" min="0"></div>
+        </div>
+
+        <div class="form-sec">Witnesses and OSHA</div>
+        <div class="fgrp"><label class="flbl" for="inc_witnesses">Witnesses (Name and Phone)</label><input type="text" id="inc_witnesses" class="finp" placeholder="NONE if no witnesses"></div>
+        <div class="fgrp"><label class="flbl" for="inc_contact">Follow-up Contact Name / Phone</label><input type="text" id="inc_contact" class="finp"></div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_oshaRecordable">OSHA Recordable?</label>
+            <select id="inc_oshaRecordable" class="finp"><option>No</option><option>Yes</option></select></div>
+          <div class="fgrp hidden" id="inc_oshaTypeWrap"><label class="flbl" for="inc_oshaType">OSHA Classification</label>
+            <select id="inc_oshaType" class="finp">
+              <option value="Injury">Injury</option>
+              <option value="Days Away">Days Away From Work</option>
+              <option value="Restriction">Job Transfer or Restriction</option>
+              <option value="Other Recordable">Other Recordable Case</option>
+              <option value="Death">Death</option>
+            </select></div>
+        </div>
+
+        <div class="form-sec">Report Preparer</div>
+        <div class="grid2">
+          <div class="fgrp"><label class="flbl" for="inc_preparerName">Preparer Name and Title</label><input type="text" id="inc_preparerName" class="finp" placeholder="e.g. Tim Jennings, Director"></div>
+          <div class="fgrp"><label class="flbl" for="inc_preparerPhone">Preparer Phone</label><input type="tel" id="inc_preparerPhone" class="finp"></div>
+        </div>
+
+        <div class="toolbar mt">
+          <button class="btn btn-red" id="incSubmitBtn" type="button">Submit Report and Log Incident</button>
+          <button class="btn btn-black" id="wcBtn" type="button">Download Filled WC Form PDF</button>
+          <button class="btn btn-line" id="incClear" type="button">Clear Form</button>
+        </div>
+        <p class="hint">Submit first to log the incident and get its ID, then download the filled Form IA-1 for the carrier. Per AWCC, employers have 10 days to report injuries involving more than 7 days of lost time.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div id="inc-log" class="hidden">
+    <div class="ctrl-row">
+      <div class="fgrp"><label class="flbl" for="incLogYear">Year</label><select id="incLogYear" class="finp"></select></div>
+      <button class="btn btn-black" id="incLogRefresh" type="button">Refresh</button>
+      <button class="btn btn-ghost" id="incCsv" type="button">Export CSV</button>
+    </div>
+    <div id="incLogSpin" class="spin-wrap hidden"><div class="spin"></div></div>
+    <div id="incLogBody"></div>
+  </div>
+
+  <!-- OSHA -->
+  <div id="inc-osha" class="hidden">
+    <div class="ctrl-row">
+      <div class="fgrp"><label class="flbl" for="oshaYear">Year</label><select id="oshaYear" class="finp"></select></div>
+      <button class="btn btn-black" id="oshaRefresh" type="button">Refresh</button>
+      <button class="btn btn-red" id="osha300ABtn" type="button">Download 300A Summary PDF</button>
+    </div>
+    <div id="oshaSpin" class="spin-wrap hidden"><div class="spin"></div></div>
+    <div id="oshaBody"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>Logistics Warehouse, Inc. · Safety Training Portal · <span id="appVer"></span></footer>
+
+<div id="updateBar" class="update-bar hidden">
+  A new version of the app is ready.
+  <button class="btn btn-red btn-sm" id="updateBtn" type="button">Update Now</button>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/api.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/app.js"></script>
+<script src="js/manager.js"></script>
+</body>
+</html>
