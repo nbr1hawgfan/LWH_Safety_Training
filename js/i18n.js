@@ -4,6 +4,7 @@
 // ============================================================
 window.I18N = {
   EN: {
+    tapView: 'Tap to view results', myResults: 'My Results', passedLbl: 'Passed', completedOn: 'Completed', onTimeLbl: 'On Time', attemptsLbl: 'Attempts', yes: 'Yes', no: 'No — late', dlCert: 'Download Certificate', dlRecord: 'Download Test Record', recordMissing: 'Test record not on file. Ask HR for a copy.', rewatch: 'Watch the Video Again', preparing: 'Preparing...', recNote: 'Your test record shows each question and the answer you chose.',
     welcome: 'Welcome, {name}', pick: 'Select a training below.',
     monthly: 'Monthly Trainings', special: 'Special / Required Trainings', specialOne: 'Special Training',
     thisMonth: 'THIS MONTH', completed: 'Completed {date}', locked: 'Locked out — contact your manager',
@@ -24,6 +25,7 @@ window.I18N = {
     loadErr: 'Could not load the training. Please try again.',
   },
   ES: {
+    tapView: 'Toque para ver resultados', myResults: 'Mis Resultados', passedLbl: 'Aprobado', completedOn: 'Completado', onTimeLbl: 'A Tiempo', attemptsLbl: 'Intentos', yes: 'Sí', no: 'No — tarde', dlCert: 'Descargar Certificado', dlRecord: 'Descargar Registro del Examen', recordMissing: 'El registro del examen no está en archivo. Pida una copia a Recursos Humanos.', rewatch: 'Ver el Video Otra Vez', preparing: 'Preparando...', recNote: 'Su registro muestra cada pregunta y la respuesta que eligió.',
     welcome: 'Bienvenido, {name}', pick: 'Seleccione una capacitación.',
     monthly: 'Capacitaciones Mensuales', special: 'Capacitaciones Especiales / Requeridas', specialOne: 'Capacitación Especial',
     thisMonth: 'ESTE MES', completed: 'Completado {date}', locked: 'Bloqueado — contacte a su supervisor',
@@ -44,6 +46,7 @@ window.I18N = {
     loadErr: 'No se pudo cargar la capacitación. Intente de nuevo.',
   },
   FR: {
+    tapView: 'Appuyez pour voir les résultats', myResults: 'Mes Résultats', passedLbl: 'Réussi', completedOn: 'Terminé', onTimeLbl: 'À Temps', attemptsLbl: 'Essais', yes: 'Oui', no: 'Non — en retard', dlCert: 'Télécharger le Certificat', dlRecord: 'Télécharger le Relevé du Test', recordMissing: 'Relevé du test introuvable. Demandez une copie aux RH.', rewatch: 'Revoir la Vidéo', preparing: 'Préparation...', recNote: 'Votre relevé montre chaque question et votre réponse.',
     welcome: 'Bienvenue, {name}', pick: 'Choisissez une formation ci-dessous.',
     monthly: 'Formations Mensuelles', special: 'Formations Spéciales / Obligatoires', specialOne: 'Formation Spéciale',
     thisMonth: 'CE MOIS', completed: 'Terminé {date}', locked: 'Bloqué — contactez votre responsable',
@@ -64,6 +67,7 @@ window.I18N = {
     loadErr: 'Impossible de charger la formation. Réessayez.',
   },
   RU: {
+    tapView: 'Нажмите, чтобы увидеть результаты', myResults: 'Мои результаты', passedLbl: 'Сдано', completedOn: 'Пройдено', onTimeLbl: 'Вовремя', attemptsLbl: 'Попытки', yes: 'Да', no: 'Нет — с опозданием', dlCert: 'Скачать сертификат', dlRecord: 'Скачать протокол теста', recordMissing: 'Протокол теста не найден. Запросите копию в отделе кадров.', rewatch: 'Посмотреть видео снова', preparing: 'Подготовка...', recNote: 'В протоколе указаны вопросы и ваши ответы.',
     welcome: 'Добро пожаловать, {name}', pick: 'Выберите обучение ниже.',
     monthly: 'Ежемесячное обучение', special: 'Специальное / обязательное обучение', specialOne: 'Специальное обучение',
     thisMonth: 'ЭТОТ МЕСЯЦ', completed: 'Пройдено {date}', locked: 'Заблокировано — обратитесь к руководителю',
@@ -84,6 +88,7 @@ window.I18N = {
     loadErr: 'Не удалось загрузить обучение. Попробуйте снова.',
   },
   AR: {
+    tapView: 'اضغط لعرض النتائج', myResults: 'نتائجي', passedLbl: 'ناجح', completedOn: 'تاريخ الإكمال', onTimeLbl: 'في الوقت', attemptsLbl: 'المحاولات', yes: 'نعم', no: 'لا — متأخر', dlCert: 'تنزيل الشهادة', dlRecord: 'تنزيل سجل الاختبار', recordMissing: 'سجل الاختبار غير موجود. اطلب نسخة من الموارد البشرية.', rewatch: 'مشاهدة الفيديو مرة أخرى', preparing: 'جارٍ التحضير...', recNote: 'يعرض السجل كل سؤال والإجابة التي اخترتها.',
     welcome: 'مرحباً، {name}', pick: 'اختر تدريباً من القائمة.',
     monthly: 'التدريبات الشهرية', special: 'تدريبات خاصة / إلزامية', specialOne: 'تدريب خاص',
     thisMonth: 'هذا الشهر', completed: 'مكتمل {date}', locked: 'مقفل — اتصل بمديرك',

@@ -184,7 +184,7 @@
     try {
       const r = await call('transcript', { employeeId: id });
       if (!r.success) throw new Error(r.message);
-      alertBox('transcriptMsg', 'success', 'Transcript generated for ' + r.name + ' (' + r.complete + ' of 12 months). Emailed to HR and managers and saved to Drive.');
+      alertBox('transcriptMsg', 'success', 'Transcript generated for ' + r.name + ' (' + r.complete + ' of ' + (r.required != null ? r.required : 12) + ' required months complete). Emailed to HR and managers and saved to Drive.');
     } catch (e) { alertBox('transcriptMsg', 'error', e.message); }
     finally { busy(btn, false); }
   }

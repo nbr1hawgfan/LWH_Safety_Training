@@ -73,6 +73,8 @@ function apiRoute_(action, p, token) {
       case 'specialList':     return getSpecialTrainings(s.empId);
       case 'specialTraining': return apiSpecialTraining_(s, p);
       case 'submitSpecial':   return apiSubmitSpecial_(s, p);
+      case 'myRecord':        return apiMyRecord_(s, p);
+      case 'myFile':          return apiMyFile_(s, p);
     }
   }
 
@@ -339,6 +341,128 @@ function apiSubmitSpecial_(s, p) {
     }
   }
   return r;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// MY RESULTS — employee views a completed training and downloads
+// their certificate / test record (own records only)
+// ════════════════════════════════════════════════════════════
+function apiFindPass_(empId, kind, id) {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  const emp = String(empId).trim().toUpperCase();
+  const tr  = function (v) { return String(v).trim().toUpperCase() === 'TRUE'; };
+
+  if (kind === 'm') {
+    const mn = parseInt(id), yr = new Date().getFullYear();
+    const sh = ss.getSheetByName('Results');
+    if (!(mn >= 1 && mn <= 12) || sh.getLastRow() < 2) return null;
+    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 16).getValues().filter(function (r) {
+      return String(r[1]).trim().toUpperCase() === emp && parseInt(r[5]) === mn &&
+             (r[15] === '' || isNaN(parseInt(r[15])) || parseInt(r[15]) === yr);
+    });
+    const p = rows.find(function (r) { return tr(r[9]); });
+    if (!p) return null;
+    return { kind: 'm', id: mn, ts: new Date(p[0]), first: String(p[2] || ''), last: String(p[3] || ''),
+             monthName: String(p[6]), title: String(p[7]), onTime: tr(p[11]), ack: tr(p[12]),
+             lang: String(p[14] || 'EN'), attemptNum: parseInt(p[10]) || rows.length, attempts: rows.length };
+  }
+
+  const tid = String(id).trim();
+  const sh  = ss.getSheetByName('Special_Results');
+  if (!tid || !sh || sh.getLastRow() < 2) return null;
+  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 15).getValues().filter(function (r) {
+    return String(r[1]).trim().toUpperCase() === emp && String(r[5]).trim() === tid;
+  });
+  const p = rows.find(function (r) { return tr(r[8]); });
+  if (!p) return null;
+  return { kind: 's', id: tid, ts: new Date(p[0]), first: String(p[2] || ''), last: String(p[3] || ''),
+           monthName: '', title: String(p[6]), onTime: tr(p[10]), ack: tr(p[11]),
+           lang: String(p[13] || 'EN'), attemptNum: parseInt(p[9]) || rows.length, attempts: rows.length };
+}
+
+// Same file names / folders the certificate + test record generators use
+function apiCertNames_(rec) {
+  const yr       = Utilities.formatDate(rec.ts, Session.getScriptTimeZone(), 'yyyy');
+  const safeName = (rec.first + '_' + rec.last).replace(/[^a-zA-Z0-9_]/g, '_');
+  const safeT    = rec.title.replace(/[^a-zA-Z0-9]/g, '_');
+  if (rec.kind === 'm') {
+    return { path: [yr, rec.monthName],
+             cert:   safeName + '_' + rec.monthName + '_' + safeT + '_' + yr + '.pdf',
+             record: safeName + '_' + rec.monthName + '_' + safeT + '_TestRecord_' + yr + '.pdf' };
+  }
+  return { path: ['Special_Trainings', yr, rec.title],
+           cert:   safeName + '_' + safeT + '_Certificate_' + yr + '.pdf',
+           record: safeName + '_' + safeT + '_TestRecord_' + yr + '.pdf' };
+}
+
+function apiFindCertFile_(names, which) {
+  const cfg    = getConfig();
+  const rootId = cfg['Certificates Folder ID'];
+  let folder;
+  try {
+    folder = (rootId && rootId !== 'PASTE_FOLDER_ID_HERE') ? DriveApp.getFolderById(rootId) : DriveApp.getRootFolder();
+  } catch (e) { return null; }
+  for (let i = 0; i < names.path.length; i++) {
+    const it = folder.getFoldersByName(names.path[i]);
+    if (!it.hasNext()) return null;
+    folder = it.next();
+  }
+  const files = folder.getFilesByName(names[which]);
+  while (files.hasNext()) { const f = files.next(); if (!f.isTrashed()) return f; }
+  return null;
+}
+
+function apiMyRecord_(s, p) {
+  const kind = p.kind === 's' ? 's' : 'm';
+  const rec  = apiFindPass_(s.empId, kind, p.id);
+  if (!rec) return { success: false, message: 'No completed record found for this training.' };
+
+  let videoId = '';
+  try {
+    const t = kind === 'm' ? getTrainingData('EN', rec.id) : getSpecialTrainingData(rec.id, 'EN');
+    videoId = (t && !t.error) ? String(t.videoId || '') : '';
+  } catch (e) {}
+
+  return {
+    success: true, kind: kind, id: rec.id,
+    title: rec.title, monthName: rec.monthName,
+    completedAt: Utilities.formatDate(rec.ts, Session.getScriptTimeZone(), 'MM/dd/yyyy h:mm a'),
+    score: 100, onTime: rec.onTime, acknowledged: rec.ack, language: rec.lang,
+    attemptNum: rec.attemptNum, attempts: rec.attempts,
+    recordAvailable: !!apiFindCertFile_(apiCertNames_(rec), 'record'),
+    videoId: videoId,
+  };
+}
+
+function apiMyFile_(s, p) {
+  const kind  = p.kind === 's' ? 's' : 'm';
+  const which = p.file === 'record' ? 'record' : 'cert';
+  const rec   = apiFindPass_(s.empId, kind, p.id);
+  if (!rec) return { success: false, message: 'No completed record found for this training.' };
+
+  const names = apiCertNames_(rec);
+  const file  = apiFindCertFile_(names, which);
+  let blob = file ? file.getBlob() : null;
+
+  // Certificate missing from Drive -> rebuild it from the Results row
+  if (!blob && which === 'cert') {
+    const cfg     = getConfig();
+    const company = cfg['Company Name'] || 'Logistics Warehouse';
+    let managerName = '';
+    try {
+      const es  = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Employees');
+      const row = es.getRange(2, 1, es.getLastRow() - 1, 11).getValues()
+        .find(function (r) { return String(r[0]).trim().toUpperCase() === String(s.empId).trim().toUpperCase(); });
+      managerName = row ? String(row[8] || '') : '';
+    } catch (e) {}
+    blob = kind === 'm'
+      ? generateCertificate_(rec.first, rec.last, { monthName: rec.monthName, topic: rec.title }, rec.ts, company, managerName)
+      : generateSpecialCertificate_(rec.first, rec.last, { title: rec.title }, rec.ts, company, managerName);
+  }
+  if (!blob) return { success: false, message: 'The test record for this training was not found. Ask HR for a copy.' };
+
+  return { success: true, name: names[which], b64: Utilities.base64Encode(blob.getBytes()) };
 }
 
 

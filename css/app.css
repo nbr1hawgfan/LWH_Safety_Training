@@ -126,7 +126,7 @@ textarea.finp { min-height:110px; resize:vertical; }
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   min-height:50px; padding:12px 22px; border:2px solid transparent; cursor:pointer;
   font-family:var(--head); font-size:17px; font-weight:500; letter-spacing:.4px; text-transform:uppercase;
-  touch-action:manipulation; transition:background .15s, color .15s;
+  touch-action:manipulation; transition:background .15s, color .15s; text-decoration:none;
 }
 .btn svg { width:17px; height:17px; }
 .btn-red   { background:var(--red); color:var(--white); }
@@ -263,6 +263,21 @@ textarea.finp { min-height:110px; resize:vertical; }
 .subtab.active { background:var(--black); color:var(--white); }
 .qfield { border:1px solid var(--line); border-left:5px solid var(--black); padding:14px; margin-bottom:12px; background:var(--row); }
 .qfield-h { font-family:var(--head); text-transform:uppercase; font-size:15px; margin-bottom:10px; }
+
+/* ── MY RESULTS ─────────────────────────────────────────── */
+.rec-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--line); margin-bottom:18px; }
+.rec-cell { padding:14px 16px; border-right:1px solid var(--line); background:var(--white); }
+.rec-cell:last-child { border-right:none; }
+.rec-val { font-family:var(--head); font-size:24px; color:var(--black); line-height:1.1; }
+.rec-val.green { color:var(--green); } .rec-val.red { color:var(--red); }
+.rec-lbl { font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+.rec-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width:640px) {
+  .rec-grid { grid-template-columns:1fr 1fr; }
+  .rec-cell:nth-child(2) { border-right:none; }
+  .rec-cell:nth-child(-n+2) { border-bottom:1px solid var(--line); }
+  .rec-actions { grid-template-columns:1fr; }
+}
 
 /* ── MISC ───────────────────────────────────────────────── */
 .spin-wrap { text-align:center; padding:40px 10px; color:var(--muted); }

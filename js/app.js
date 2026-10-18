@@ -77,7 +77,11 @@
   window.ICO = ICO;
 
   // ── TABS + HEADER ────────────────────────────────────────
+  const INCIDENTS_ON = LWH_CONFIG.SHOW_INCIDENTS === true;
+  if (!INCIDENTS_ON) document.querySelector('.nav-btn[data-tab="inc"]').classList.add('hidden');
+
   window.showTab = function (tab) {
+    if (tab === 'inc' && !INCIDENTS_ON) tab = 'mgr';   // hidden: old links/bookmarks land on the dashboard
     APP.tab = tab;
     document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
     let page = tab;
@@ -170,7 +174,7 @@
     APP.emp = null; APP.empToken = ''; APP.cur = null; APP.home = null;
     try { sessionStorage.removeItem('lwh_st_emp'); } catch (e) {}
     $('vidFrame').src = 'about:blank';
-    hide('emp-home'); hide('emp-training'); show('emp-login');
+    hide('emp-home'); hide('emp-training'); hide('emp-record'); show('emp-login');
     hide('empLoginErr');
     updateHeader();
     window.scrollTo(0, 0);
@@ -198,7 +202,7 @@
   function showEmpHome() {
     stopTimer();
     $('vidFrame').src = 'about:blank';
-    hide('emp-login'); hide('emp-training'); show('emp-home');
+    hide('emp-login'); hide('emp-training'); hide('emp-record'); show('emp-home');
     APP.cur = null;
     applyLangUI(); updateHeader();
     loadHome();
@@ -225,7 +229,7 @@
   }
 
   function trowHtml(o) {
-    return '<div class="trow ' + o.cls + '"' + (o.go ? ' role="button" tabindex="0" data-kind="' + o.kind + '" data-id="' + esc(o.id) + '"' : '') + '>' +
+    return '<div class="trow ' + o.cls + '"' + (o.go ? ' role="button" tabindex="0" data-kind="' + o.kind + '" data-id="' + esc(o.id) + '"' + (o.view ? ' data-view="' + o.view + '"' : '') : '') + '>' +
       '<div class="trow-ico ' + o.ico + '">' + o.icon + '</div>' +
       '<div class="trow-body">' +
         '<div class="trow-name">' + esc(o.name) + (o.tag ? '<span class="tag">' + esc(o.tag) + '</span>' : '') + '</div>' +
@@ -247,7 +251,7 @@
         h.months.slice().reverse().map(function (m) {
           const o = { kind: 'm', id: m.monthNum, name: m.monthName, topic: m.topic, tag: m.isCurrent ? t('thisMonth') : '' };
           if (m.status === 'complete') {
-            Object.assign(o, { cls: 'done', ico: 'ico-done', icon: ICO.check, meta: t('completed', { date: m.completedAt }), metaColor: 'var(--green)' });
+            Object.assign(o, { go: true, view: 'record', cls: 'go done', ico: 'ico-done', icon: ICO.check, meta: t('completed', { date: m.completedAt }) + ' — ' + t('tapView'), metaColor: 'var(--green)' });
           } else if (m.status === 'locked') {
             Object.assign(o, { cls: 'locked', ico: 'ico-past', icon: ICO.lock, meta: t('locked'), metaColor: 'var(--red)' });
           } else if (m.canTake && m.isCurrent) {
@@ -266,7 +270,7 @@
       $('specialList').innerHTML = h.specials.map(function (s) {
         const o = { kind: 's', id: s.trainingId, name: s.title, topic: t('specialOne') + (s.assignedBy ? ' · ' + s.assignedBy : '') };
         if (s.completed) {
-          Object.assign(o, { cls: 'done', ico: 'ico-done', icon: ICO.check, meta: t('completed', { date: s.completedAt }), metaColor: 'var(--green)' });
+          Object.assign(o, { go: true, view: 'record', cls: 'go done', ico: 'ico-done', icon: ICO.check, meta: t('completed', { date: s.completedAt }) + ' — ' + t('tapView'), metaColor: 'var(--green)' });
         } else if (s.locked) {
           Object.assign(o, { cls: 'locked', ico: 'ico-past', icon: ICO.lock, meta: t('locked'), metaColor: 'var(--red)' });
         } else {
@@ -286,8 +290,64 @@
     if (!row) return;
     if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
     ev.preventDefault();
-    openTraining(row.dataset.kind, row.dataset.id);
+    if (row.dataset.view === 'record') openRecord(row.dataset.kind, row.dataset.id);
+    else openTraining(row.dataset.kind, row.dataset.id);
   }
+
+  // ── MY RESULTS (completed training) ──────────────────────
+  const LANG_NAMES = { EN: 'English', ES: 'Español', FR: 'Français', RU: 'Русский', AR: 'العربية' };
+
+  async function openRecord(kind, id) {
+    hide('emp-home'); hide('emp-training'); show('emp-record');
+    $('emp-record').setAttribute('dir', APP.lang === 'AR' ? 'rtl' : 'ltr');
+    $('recBackLbl').textContent = t('back');
+    show('recSpin'); $('recBody').innerHTML = '';
+    window.scrollTo(0, 0);
+    try {
+      const r = await API.call('myRecord', { kind: kind, id: id }, APP.empToken);
+      if (!r.success) throw new Error(r.message);
+      const name = r.kind === 'm' ? r.monthName : t('specialOne');
+      $('recBody').innerHTML =
+        '<div class="topic-banner">' +
+          '<div class="topic-lbl">' + esc(r.kind === 'm' ? t('safety', { month: r.monthName }) : name) + ' · ' + esc(t('myResults')) + '</div>' +
+          '<div class="topic-name">' + esc(r.title) + '</div>' +
+          '<div class="topic-desc">' + esc(APP.emp.firstName + ' ' + APP.emp.lastName) + '</div>' +
+        '</div>' +
+        '<div class="rec-grid">' +
+          '<div class="rec-cell"><div class="rec-val green">100%</div><div class="rec-lbl">' + esc(t('passedLbl')) + '</div></div>' +
+          '<div class="rec-cell"><div class="rec-val" style="font-size:18px;">' + esc(r.completedAt) + '</div><div class="rec-lbl">' + esc(t('completedOn')) + '</div></div>' +
+          '<div class="rec-cell"><div class="rec-val ' + (r.onTime ? 'green' : 'red') + '">' + esc(r.onTime ? t('yes') : t('no')) + '</div><div class="rec-lbl">' + esc(t('onTimeLbl')) + '</div></div>' +
+          '<div class="rec-cell"><div class="rec-val">' + esc(r.attempts) + '</div><div class="rec-lbl">' + esc(t('attemptsLbl')) + ' · ' + esc(LANG_NAMES[r.language] || r.language) + '</div></div>' +
+        '</div>' +
+        '<div class="card"><div class="card-bd">' +
+          '<div class="rec-actions">' +
+            '<button class="btn btn-red" type="button" data-dl="cert">' + esc(t('dlCert')) + '</button>' +
+            (r.recordAvailable ? '<button class="btn btn-black" type="button" data-dl="record">' + esc(t('dlRecord')) + '</button>'
+                               : '<div class="alert alert-info" style="margin:0;">' + esc(t('recordMissing')) + '</div>') +
+          '</div>' +
+          (r.recordAvailable ? '<p class="hint">' + esc(t('recNote')) + '</p>' : '') +
+          (r.videoId ? '<a class="btn btn-line btn-block mt" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=' + encodeURIComponent(r.videoId) + '">' + esc(t('rewatch')) + '</a>' : '') +
+          '<div id="recErr" class="alert alert-error hidden mt"></div>' +
+        '</div></div>';
+      $('recBody').dataset.kind = r.kind; $('recBody').dataset.id = r.id;
+    } catch (e) {
+      $('recBody').innerHTML = '<div class="alert alert-error">' + esc(e.message || t('loadErr')) + '</div>';
+    }
+    hide('recSpin');
+  }
+
+  $('recBody').addEventListener('click', async function (ev) {
+    const b = ev.target.closest('[data-dl]'); if (!b) return;
+    const lbl = b.textContent; b.disabled = true; b.textContent = t('preparing');
+    hide('recErr');
+    try {
+      const r = await API.call('myFile', { kind: this.dataset.kind, id: this.dataset.id, file: b.dataset.dl }, APP.empToken);
+      if (!r.success) throw new Error(r.message);
+      downloadBlob(b64ToBlob(r.b64, 'application/pdf'), r.name);
+    } catch (e) { alertBox('recErr', 'error', e.message); }
+    finally { b.disabled = false; b.textContent = lbl; }
+  });
+  $('recBackBtn').addEventListener('click', function () { showEmpHome(); });
   ['monthList', 'specialList'].forEach(function (id) {
     $(id).addEventListener('click', onRowActivate);
     $(id).addEventListener('keydown', onRowActivate);

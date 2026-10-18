@@ -6,7 +6,7 @@ window.LWH_CONFIG = {
   // Apps Script web app /exec URL (Deploy > Manage deployments > Web app URL)
   API_URL: 'https://script.google.com/macros/s/AKfycbxY_tZyajeHo00TH_EWaFgHBhG-fOWN8uxeXwxufDBzVnA8cOZxCdDtkdJ7N_O0uKfK/exec',
 
-  APP_VERSION: '1.0.0',
+  APP_VERSION: '1.0.3',
   COMPANY: 'Logistics Warehouse',
 
   // Weather shown in the top strip (Open-Meteo, no API key needed)
@@ -17,6 +17,11 @@ window.LWH_CONFIG = {
     timezone: 'America/Chicago',
     refreshMinutes: 15,
   },
+
+  // Incidents tab (First Report of Injury, Incident Log, OSHA 300).
+  // Fully wired to the backend; hidden while HR uses its official forms.
+  // Set to true to bring it back.
+  SHOW_INCIDENTS: false,
 
   // Employee session signs out after this many idle minutes (shared devices)
   EMP_IDLE_MINUTES: 15,

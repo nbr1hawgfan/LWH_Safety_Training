@@ -26,7 +26,11 @@ gas/Api.gs              NEW Apps Script file — add next to Code.gs
 ### 1a. Add `Api.gs`
 Extensions > Apps Script > **+** > Script > name it `Api` > paste `gas/Api.gs`. Do not paste it into Code.gs.
 
-### 1b. Four small fixes in `Code.gs` (Edit > Find and replace)
+### 1b. Replace four functions in `Code.gs`
+
+Easiest way: open `gas/Code-replacements.gs`. It has the four complete functions (`getTrainingData`, `submitQuiz`, `getSpecialTrainingData`, `submitSpecialQuiz`) with the fixes already in, marked `// FIX`. In Code.gs, delete each old function and paste the new one in its place.
+
+Or do it by find and replace:
 
 These fix a real bug: French, Russian and Arabic employees currently get **Spanish** questions, and their answers are graded against the **English** key, so they can never pass.
 
@@ -40,6 +44,22 @@ These fix a real bug: French, Russian and Arabic employees currently get **Spani
 Optional: in the Employees sheet, widen the Language column validation from `EN,ES` to `EN,ES,FR,RU,AR`.
 
 After saving, translations already cached in the old (wrong) language expire within 1 hour on their own.
+
+### 1b-2. Training Start Month (per employee)
+
+1. Add `gas/TrainingStart.gs` as a new file.
+2. Replace the six functions listed in `gas/Code-replacements-2.gs` (same delete-and-paste as 1b).
+3. Run **setupTrainingStart()** once from the editor. It:
+   - adds a `Training_Start_Month` column to Employees (date cell, shows as "Nov 2026")
+   - widens the Language dropdown to EN / ES / FR / RU / AR
+   - adds **Go Live Year** to Config (set to this year — change it if the portal went live in a different year)
+4. Optional: run **debugTrainingStart()** and check the log — it lists each employee's first required month.
+
+How HR uses it: enter the first month an employee owes training (e.g. 11/1/2026). Blank = starts at Go Live. Earlier months never show for that employee, never block them, don't count against them on the dashboard, and don't trigger announcement / reminder / overdue emails. Transcripts mark those months "Not Required" and summarize as "X of N required".
+
+Why Go Live Year matters: before this, Go Live Month applied every year, so January–May would have disappeared again in 2027. Now the Go Live month only applies to the Go Live year.
+
+Also fixed here: the annual transcript was counting passes from prior years; it now only counts the current year.
 
 ### 1c. Deploy
 Deploy > **New deployment** > type **Web app**
@@ -105,6 +125,9 @@ Returning plain text (not an HTML page) removes the `google.script.run` channel 
 - Sheet layouts, Config keys, certificates, test records, transcripts, emails, OSHA 300 log, WC Form IA-1 fill (still pdf-lib in the browser), triggers. `generateAllTranscripts()` still runs from the editor.
 
 ---
+
+## Incidents tab (hidden)
+The Incidents tab (First Report of Injury / Form IA-1, Incident Log, OSHA 300 and 300A) is fully built and wired to the backend but hidden while HR uses its official forms. To bring it back, set `SHOW_INCIDENTS: true` in `js/config.js` and bump `VERSION` in `sw.js`. Optional: add a "Report an Incident" shortcut (`./#inc`) back to `manifest.webmanifest`.
 
 ## Known limits
 - Apps Script responses take 1–3 seconds; certificate PDFs on a pass take ~10 seconds (same as before).

@@ -15,6 +15,6 @@
   ],
   "shortcuts": [
     { "name": "Manager Dashboard", "url": "./#mgr", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Report an Incident", "url": "./#inc", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Special Trainings", "url": "./#special", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }
