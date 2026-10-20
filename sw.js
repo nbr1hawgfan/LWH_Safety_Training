@@ -2,7 +2,7 @@
 // LWH Safety Training — service worker
 // Bump VERSION on every deploy so phones pick up the new files.
 // ============================================================
-const VERSION = 'st-v1.0.3';
+const VERSION = 'st-v1.0.4';
 const SHELL_CACHE = VERSION + '-shell';
 const RUNTIME_CACHE = VERSION + '-runtime';
 
